@@ -60,7 +60,7 @@ export default function Table({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {filteredAndSortedStocks.map((stock, index) => (
+            {filteredAndSortedStocks.map((stock) => (
               <tr
                 key={stock.symbol}
                 className="hover:bg-gray-50 transition-colors"

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Search, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import { Search, RefreshCw } from "lucide-react";
 import Loader from "./components/Loader";
 
 import { STOCK_SYMBOLS, API_KEY, BASE_URL } from "./const";
