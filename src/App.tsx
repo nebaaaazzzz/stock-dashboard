@@ -1,24 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import {
-  Search,
-  TrendingUp,
-  TrendingDown,
-  RefreshCw,
-  AlertCircle,
-} from "lucide-react";
+import { Search, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
+import Loader from "./components/Loader";
 
-interface StockData {
-  symbol: string;
-  name: string;
-  price: number;
-  change: number;
-  changePercent: number;
-  volume: number;
-  marketCap: string;
-}
-
-type SortField = "symbol" | "price" | "change" | "changePercent" | "volume";
-type SortDirection = "asc" | "desc";
+import { STOCK_SYMBOLS, API_KEY, BASE_URL } from "./const";
+import type { SortDirection, SortField, StockData } from "./interfaces";
+import ErrorC from "./components/ErrorC";
+import Table from "./components/Table";
 
 const App: React.FC = () => {
   const [stocks, setStocks] = useState<StockData[]>([]);
@@ -29,27 +16,7 @@ const App: React.FC = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
 
-  const API_KEY = "d346l51r01qqt8snotd0d346l51r01qqt8snotdg"; // NOT SECURE - for demo purposes only
-  const BASE_URL = "https://finnhub.io/api/v1";
-
   // Stock symbols and their company names
-  const STOCK_SYMBOLS = [
-    { symbol: "AAPL", name: "Apple Inc." },
-    { symbol: "GOOGL", name: "Alphabet Inc." },
-    { symbol: "MSFT", name: "Microsoft Corporation" },
-    { symbol: "AMZN", name: "Amazon.com Inc." },
-    { symbol: "TSLA", name: "Tesla Inc." },
-    { symbol: "META", name: "Meta Platforms Inc." },
-    { symbol: "NVDA", name: "NVIDIA Corporation" },
-    { symbol: "NFLX", name: "Netflix Inc." },
-    { symbol: "V", name: "Visa Inc." },
-    { symbol: "JPM", name: "JPMorgan Chase & Co." },
-    { symbol: "BABA", name: "Alibaba Group" },
-    { symbol: "JNJ", name: "Johnson & Johnson" },
-    { symbol: "WMT", name: "Walmart Inc." },
-    { symbol: "PG", name: "Procter & Gamble Co." },
-    { symbol: "UNH", name: "UnitedHealth Group Inc." },
-  ];
 
   const fetchStockQuote = async (symbol: string): Promise<StockData | null> => {
     try {
@@ -215,43 +182,11 @@ const App: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <RefreshCw className="w-12 h-12 animate-spin mx-auto text-blue-600 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Loading Stock Data
-            </h2>
-            <p className="text-gray-500">
-              Fetching the latest market information...
-            </p>
-          </div>
-        </div>
-      </div>
-    );
+    return <Loader />;
   }
 
   if (error) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center py-20">
-            <AlertCircle className="w-12 h-12 mx-auto text-red-500 mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-700 mb-2">
-              Error Loading Data
-            </h2>
-            <p className="text-gray-500 mb-4">{error}</p>
-            <button
-              onClick={fetchStockData}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <ErrorC error={error} fetchStockData={fetchStockData} />;
   }
 
   return (
@@ -295,119 +230,13 @@ const App: React.FC = () => {
         </div>
 
         {/* Stock Table */}
-        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("symbol")}
-                  >
-                    Symbol {getSortIcon("symbol")}
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Company
-                  </th>
-                  <th
-                    className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("price")}
-                  >
-                    Price {getSortIcon("price")}
-                  </th>
-                  <th
-                    className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("change")}
-                  >
-                    Change {getSortIcon("change")}
-                  </th>
-                  <th
-                    className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("changePercent")}
-                  >
-                    Change % {getSortIcon("changePercent")}
-                  </th>
-                  <th
-                    className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
-                    onClick={() => handleSort("volume")}
-                  >
-                    Volume {getSortIcon("volume")}
-                  </th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Market Cap
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {filteredAndSortedStocks.map((stock, index) => (
-                  <tr
-                    key={stock.symbol}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-6 py-4">
-                      <div className="flex items-center">
-                        <span className="font-bold text-gray-900">
-                          {stock.symbol}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{stock.name}</div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span className="font-semibold text-gray-900">
-                        ${formatNumber(stock.price)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div
-                        className={`flex items-center justify-end gap-1 ${
-                          stock.change >= 0 ? "text-green-600" : "text-red-600"
-                        }`}
-                      >
-                        {stock.change >= 0 ? (
-                          <TrendingUp className="w-4 h-4" />
-                        ) : (
-                          <TrendingDown className="w-4 h-4" />
-                        )}
-                        <span className="font-semibold">
-                          {stock.change >= 0 ? "+" : ""}
-                          {formatNumber(stock.change)}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span
-                        className={`font-semibold px-2 py-1 rounded ${
-                          stock.changePercent >= 0
-                            ? "bg-green-100 text-green-800"
-                            : "bg-red-100 text-red-800"
-                        }`}
-                      >
-                        {stock.changePercent >= 0 ? "+" : ""}
-                        {stock.changePercent.toFixed(2)}%
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right text-gray-600">
-                      {formatVolume(stock.volume)}
-                    </td>
-                    <td className="px-6 py-4 text-right text-gray-600 font-semibold">
-                      ${stock.marketCap}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {filteredAndSortedStocks.length === 0 && (
-            <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">
-                No stocks found matching your search.
-              </p>
-            </div>
-          )}
-        </div>
+        <Table
+          filteredAndSortedStocks={filteredAndSortedStocks}
+          handleSort={handleSort}
+          getSortIcon={getSortIcon}
+          formatNumber={formatNumber}
+          formatVolume={formatVolume}
+        />
 
         {/* Footer */}
         <div className="text-center mt-8 text-gray-500 text-sm">
